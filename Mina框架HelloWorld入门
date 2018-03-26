@@ -1,0 +1,95 @@
+
+首先推荐几篇Mina框架的好文章：
+
+Mina框架研究（1）
+Mina框架研究（2）
+Mina框架研究（3）
+ 
+
+环境准备：
+
+首先到官方网站下载最新的 MINA 版本，地址是：http://mina.apache.org。下载之前先介绍一下 MINA 的两个版本：1.0.x 适合运行环境为 JDK1.4，1.1.x 适合 JDK1.5 的版本，两者的编译环境都需要 JDK1.5。JDK1.5 已经是非常普遍了，本文中使用 1.1.5 版本的 MINA，编译和运行所需的文件是 mina-core-1.1.5.jar。
+下载 MINA 的依赖包 slf4j。MINA 使用此项目作为日志信息的输出，而 MINA 本身并不附带此项目包，请到http://www.slf4j.org/download.html 地址下载 slf4j 包，slf4j 项目解压后有很多的文件，本例中只需要其中的 slf4j-api-1.4.3.jar 和 slf4j-simple-1.4.3.jar 这两个 jar 文件。如果没有这两个文件就会导致启动例子程序的时候报 org/slf4j/LoggerFactory 类没找到的错误。
+当然要求机器上必须装有 1.5 或者更新版本的 JDK。
+最好你应该选择一个顺手的 Java 开发环境例如 Eclipse 或者 NetBeans 之类的，可以更方便的编码和调试，虽然我们的最低要求只是一个简单的文本编辑器而已。
+ 
+
+　　
+
+Mina第一个HelloWorld程序:
+
+服务端程序：
+
+Minaserver.java: 
+
+复制代码
+ 1 public class MinaServer {
+ 2     private IoAcceptor ioAcceptor;
+ 3     
+ 4     public MinaServer(int port)
+ 5     {
+ 6         ioAcceptor = new NioSocketAcceptor();
+ 7         try {
+ 8             //设置处理器
+ 9             ioAcceptor.setHandler(new MyHandler());
+10             //绑定端口
+11             ioAcceptor.bind(new InetSocketAddress(port));
+12             //规定协议，设定过滤，这里用TextLineCodecFactory文本协议
+13             ioAcceptor.getFilterChain().addLast("test", new ProtocolCodecFilter(new TextLineCodecFactory()));
+14         } catch (IOException e) {
+15             e.printStackTrace();
+16         }
+17     }
+18 }
+复制代码
+ MyHandler.java:  (服务端接收消息后的业务逻辑处理)
+
+复制代码
+1 public class MyHandler extends IoHandlerAdapter {
+2     /**接收到信息后进行逻辑处理*/
+3     @Override
+4     public void messageReceived(IoSession session, Object message)
+5             throws Exception {
+6         String getmessage = message.toString();
+7         System.out.println(getmessage);
+8     }
+9 }
+复制代码
+ 
+
+客户端程序：
+
+MinaClient.java:
+
+复制代码
+ 1 public class MinaClient {
+ 2     private IoConnector ioConnector;
+ 3     
+ 4     public MinaClient(String host, int port)
+ 5     {
+ 6         ioConnector = new NioSocketConnector();
+ 7         //过滤信息，封装成文本格式输出
+ 8         ioConnector.getFilterChain().addLast("test", new ProtocolCodecFilter(new TextLineCodecFactory()));
+ 9         
+10         ioConnector.setHandler(new ClientHandler("Hello world!"));
+11         ioConnector.connect(new InetSocketAddress(host, port));
+12     }
+13 }
+复制代码
+ClientHandler.java:
+
+复制代码
+ 1 public class ClientHandler extends IoHandlerAdapter {
+ 2     //发送给服务端的消息
+ 3     private String sendToServer;
+ 4     
+ 5     public ClientHandler(String words)
+ 6     {
+ 7         sendToServer = words;
+ 8     }
+ 9     
+10     @Override
+11     public void sessionOpened(IoSession session) throws Exception {
+12         session.write(sendToServer);
+13     }
+14 }
