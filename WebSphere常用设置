@@ -1,0 +1,91 @@
+WebSphere常用设置
+2013年11月06日 综合技术 评论 1 条 阅读 12,287 次
+1.查看环境配置信息
+D:\Program Files\IBM\WebSphere\AppServer\profiles\AppSrv01\logs\AboutThisProfile.txt
+要创建的应用程序服务器环境： 应用程序服务器
+位置： D:\Program Files\IBM\WebSphere\AppServer\profiles\AppSrv01
+需要的磁盘空间： 200 MB
+概要文件名： AppSrv01
+将此概要文件设为缺省概要文件： True
+节点名： arcgis0Node01
+主机名： arcgis0
+启用管理安全性（建议）： True
+管理控制台端口： 9060
+管理控制台安全端口： 9043
+HTTP 传输端口： 9080
+HTTPS 传输端口： 9443
+引导程序端口： 2809
+SOAP 连接器端口： 8880
+将应用程序服务器作为服务运行： True
+创建 Web 服务器定义： False
+2.查看AppSrv01 的日志
+D:\Program Files\IBM\WebSphere\AppServer\profiles\AppSrv01\logs\server1
+3.Appsrv01 start/stop命令
+D:\Program Files\IBM\WebSphere\AppServer\profiles\AppSrv01\bin
+4.修改主机名端口信息文件
+D:\Program Files\IBM\WebSphere\AppServer\profiles\AppSrv01\config\cells\arcgis0Node01Cell\nodes\arcgis0Node01\serverindex.xml
+5.修改JVM内存设置
+1.修改配置文件D:\Program Files\IBM\WebSphere\AppServer\profiles\AppSrv01\config\cells\arcgis0Node01Cell\nodes\arcgis0Node01\servers\server1\server.xml
+<jvmEntries xmi:id="JavaVirtualMachine_1183122130078" verboseModeClass="false" verboseModeGarbageCollection="false" verboseModeJNI="false" initialHeapSize="128" maximumHeapSize="256" runHProf="false" hprofArguments="" debugMode="false" debugArgs="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=7777" genericJvmArguments="" executableJarFileName="" disableJIT="false">
+2.(图形)服务器-->WebSpehre Application  Server -->server1-->java和 进程管理-->进程定义--> JAVA 虚拟机-->初始堆大小、最大堆大小-->保存
+中文字符乱码：
+JVM参数：
+-Ddefault.client.encoding=GBK -Dclient.encoding.override=GBK  -Dfile.encoding=GBK  -Duser.language=zh -Duser.region=CN
+6.修改Websphere变量
+Websphere修改变量错误导致控制台无法启动
+因为是websphere变量错误控制台无法启动，所以我们只能去修改变量配置文件；
+进入
+C:\ProgramFiles\IBM\WebSphere\AppServer\profiles\AppSrv01\config\cells\WIN-9389OC4NMRSNode01Cell\nodes\WIN-9389OC4NMRSNode01  （全局变量）variables.xml
+symbolicName="JAVA_HOME"value="${WAS_INSTALL_ROOT}/java
+symbolicName="WAS_INSTALL_ROOT"value="C:\Program Files\IBM\WebSphere\AppServer
+C:\ProgramFiles\IBM\WebSphere\AppServer\profiles\AppSrv01\config\cells\WIN-9389OC4NMRSNode01Cell\nodes\WIN-9389OC4NMRSNode01\servers\server1  （server1局部变量）
+server1变量的优先级高于WIN-9389OC4NMRSNode01（主机名+节点） 中的变量；
+variables.xml
+symbolicName="JAVA_HOME"value="${WAS_INSTALL_ROOT}/java
+symbolicName="WAS_INSTALL_ROOT"value="C:\Program Files\IBM\WebSphere\AppServer
+7.修改wasadmin密码
+管理控制台密码遗忘有两种补救措施：
+方法一：命令行——从$WAS_HOME/profiles/xxx 概要文件名/bin目录下，运行 wsadmin -conntype NONE 。
+当wsadmin的命令行窗口出现之后，运行 securityoff 。上述操作在应用服务器启动或停止的状态都能发出。
+再次启用WAS时，就是停用管理安全性的状态了。
+方法二：修改配置文件——修改$WAS_HOME\config\cells\xxx 下的security.xml，把第一个enable改成false就取消安全性了
+8.创建概要文件：
+注意：大小写
+创建概要文件：
+windows: manageprofiles.bat -create -profileName AppSrv02
+unix：./manageprofiles.sh  -create -profileName AppSrv01
+-profilePath /opt/IBM/WebSphere/AppServer/profiles/AppSrv01
+-templatePath /opt/IBM/WebSphere/AppServer/profileTemplates/default
+列出概要文件：
+D:\Program Files\IBM\WebSphere\AppServer\bin>manageprofiles.bat -listProfiles
+[AppSrv01, AppSrv02]
+cd /usr/IBM/WebSphere/AppServer/bin
+查看删除概要
+./manageprofiles.sh -listProfiles
+[Dmgr01, AppSrv01]
+./manageprofiles.sh -delete -profileName Dmgr01
+./manageprofiles.sh -delete -profileName AppSrv01
+创建管理概要
+./manageprofiles.sh -create -profileName Dmgr03 -profilePath /usr/IBM/WebSphere/AppServer/profiles/Dmgr03
+-templatePath /usr/IBM/WebSphere/AppServer/profileTemplates/dmgr/
+如果概要文件需要在不同的机器上运行，设置 -hostName 为IP地址，默认为主机名
+也可以自定义 -nodeName -cellName 值
+创建应用概要
+./manageprofiles.sh -create -profileName app3 -profilePath /usr/IBM/WebSphere/AppServer/profiles/AppSrv03 -templatePath /usr/IBM/WebSphere/AppServer/profileTemplates/default/
+启动管理控制
+/usr/IBM/WebSphere/AppServer/profiles/Dmgr03/bin/startManager.sh
+查看SOAP端口
+grep SOAP /usr/IBM/WebSphere/AppServer/profiles/Dmgr03/logs/AboutThisProfile.txt
+管理 SOAP 连接器端口： 8888
+增加应用概要
+/usr/IBM/WebSphere/AppServer/profiles/AppSrv03/bin/addNode.sh 127.0.0.1 8888
+启动
+/usr/IBM/WebSphere/AppServer/profiles/AppSrv03/bin/startNode.sh
+9.Websphere  修改端口配置（修改配置文件，图形）
+C:\WebSphere6\AppServer\profiles\AppSrv01\config\cells\softoaNode01Cell\nodes\softoaNode01\serverindex.xml
+把9080端口改为80
+然后重启WAS服务
+10.解决中文乱码问题
+1、应用程序服务器 > server1 > 进程定义 > Java 虚拟机，为通用 JVM 自变量指定
+-Ddefault.client.encoding=GBK -Dclient.encoding.override=GBK  -Dfile.encoding=GBK  -Duser.language=zh -Duser.region=CN
+进入查看D:\Program Files\IBM\WebSphere\AppServer\profiles\AppSrv01\config\cells\arcgis0Node01Cell\nodes\arcgis0Node01\servers\server1\server.xml
